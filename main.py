@@ -24,13 +24,14 @@ playerImage = pygame.transform.scale(playerImage, (64,64)) # Scaling image to 64
 playerX = 370
 playerY = 480
 playerX_change = 0
+movementSpeed = 0.1
 
 # Adding Enemy
 enemyImage = []
 enemyX = []
 enemyY = []
 enemyX_change = 0.05
-enemyY_change =[]
+enemyY_change = 50
 
 num_of_enemies = 6
 
@@ -39,7 +40,7 @@ for i in range(num_of_enemies):
     enemyImage[i] = pygame.transform.scale(enemyImage[i], (64,64)) # Scaling image to 64x64
     enemyX.append(random.randint(0, 740))
     enemyY.append(random.randint(0, 150))
-    enemyY_change.append(50)
+
 
 # Bullet
 bulletImage = pygame.image.load("assets/bulletImg.png")
@@ -87,9 +88,9 @@ def isCollision(enemyX, enemyY, bulletX, bulletY):
 
 
 
-gameOverPlayed = False
 # Game Loop
 running = True
+gameOverPlayed = False # flag for game over sound so that it plays only one time and not in loop
 while running:
     # Adding color in the screen (r,g,b)
     screen.fill((0,0,0))
@@ -105,9 +106,17 @@ while running:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                playerX_change = -0.1
+                playerX_change = -1*movementSpeed
             if event.key == pygame.K_RIGHT:
-                playerX_change = 0.1
+                playerX_change = movementSpeed
+            if event.key == pygame.K_UP and event.dict.get('repeat', 0) == 0:
+                if movementSpeed < 1:
+                    movementSpeed += 0.1
+            if event.key == pygame.K_DOWN and event.dict.get('repeat', 0) == 0:
+                if movementSpeed > 0.1:
+                    movementSpeed -= 0.1
+                else:
+                    movementSpeed = 0.1
             if event.key == pygame.K_SPACE:
                 if bulletState == "ready":
                     fireSound = mixer.Sound("assets/laser.mp3")
@@ -124,9 +133,10 @@ while running:
     for i in range(num_of_enemies):
 
         # Game Over
-        if enemyY[i] >400:
+        if enemyY[i] >440:
             for j in range(num_of_enemies):
-                enemyY[j] = 2000
+                if enemyY[j] < 300:  
+                    enemyY[j] = 2000
             
             gameOverText()
             if not gameOverPlayed:
@@ -139,10 +149,12 @@ while running:
         enemyX[i] += enemyX_change
         if enemyX[i] > 760:
             enemyX_change = -0.05   
-            enemyY[i] += 50
+            for j in range(num_of_enemies):
+                enemyY[j] += enemyY_change
         elif enemyX[i] < 0:
             enemyX_change = 0.05
-            enemyY[i] += enemyY_change[i]
+            for j in range(num_of_enemies):
+                enemyY[j] += enemyY_change
 
         # Collision
         collision = isCollision(enemyX[i], enemyY[i], bulletX, bulletY)
